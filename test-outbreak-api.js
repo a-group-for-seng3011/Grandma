@@ -1,5 +1,6 @@
-const OutbreakAPI = require("./services/outbreak-api");
+"use strict";
 
+const OutbreakAPI = require("./services/outbreak-api");
 
 async function myfunc() {
     const outbreakAPI = new OutbreakAPI(undefined, undefined, 'Coronavirus', undefined);
