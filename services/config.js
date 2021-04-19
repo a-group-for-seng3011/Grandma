@@ -21,7 +21,9 @@ const ENV_VARS = [
   "APP_SECRET",
   "VERIFY_TOKEN",
   "APP_URL",
-  "SHOP_URL"
+  "SHOP_URL",
+  "OUTBREAK_URL",
+  "OUTBREAK_TOKEN"
 ];
 
 module.exports = {
@@ -41,6 +43,10 @@ module.exports = {
 
   // URL of your website
   shopUrl: process.env.SHOP_URL,
+
+  // Outbreak API
+  outbreakUrl: process.env.OUTBREAK_URL,
+  outbreakToken: process.env.OUTBREAK_TOKEN,
 
   // Persona IDs
   personas: {},
@@ -124,7 +130,7 @@ module.exports = {
         console.log("WARNING: Missing the environment variable " + key);
       } else {
         // Check that urls use https
-        if (["APP_URL", "SHOP_URL"].includes(key)) {
+        if (["APP_URL", "SHOP_URL", "OUTBREAK_URL"].includes(key)) {
           const url = process.env[key];
           if (!url.startsWith("https://")) {
             console.log(
