@@ -16,7 +16,8 @@ const Curation = require("./curation"),
   Care = require("./care"),
   Survey = require("./survey"),
   GraphAPi = require("./graph-api"),
-  i18n = require("../i18n.config");
+  i18n = require("../i18n.config"),
+  StringMatch = require("./stringmatch");
 
 module.exports = class Receive {
   constructor(user, webhookEvent) {
@@ -74,7 +75,27 @@ module.exports = class Receive {
     );
 
     // check greeting is here and is confident
-    let greeting = this.firstEntity(this.webhookEvent.message.nlp, "greetings");
+    let greeting = this.firstTrait(this.webhookEvent.message.nlp, "wit$greetings");
+    console.log(greeting);
+
+    let bye = this.firstTrait(this.webhookEvent.message.nlp, "wit$bye");
+    console.log(bye);
+
+    let location = this.firstEntity(this.webhookEvent.message.nlp, "wit$location:location");
+    console.log(location);
+
+    let datetime = this.firstEntity(this.webhookEvent.message.nlp, "wit$datetime:datetime");
+    let interval;
+    if (datetime.type == "interval") {
+      interval = datetime;
+    }
+    console.log(interval);
+
+    const stringMatch = new StringMatch(['Zika', 'Ebola', 'Coronavirus']);
+    stringMatch.buildLowerCase();
+    const matches = stringMatch.matchLowerCase(this.webhookEvent.message.text);
+    const disease = matches[0];
+    console.log(disease);
 
     let message = this.webhookEvent.message.text.trim().toLowerCase();
 
@@ -85,31 +106,18 @@ module.exports = class Receive {
       message.includes("start over")
     ) {
       response = Response.genNuxMessage(this.user);
-    } else if (Number(message)) {
-      response = Order.handlePayload("ORDER_NUMBER");
-    } else if (message.includes("#")) {
-      response = Survey.handlePayload("CSAT_SUGGESTION");
-    } else if (message.includes(i18n.__("care.help").toLowerCase())) {
-      let care = new Care(this.user, this.webhookEvent);
-      response = care.handlePayload("CARE_HELP");
+    } else if (bye && bye.confidence > 0.8) {
+      response = [
+        Response.genText(i18n.__("end.farewell"))
+      ];
     } else {
+
       response = [
         Response.genText(
           i18n.__("fallback.any", {
             message: this.webhookEvent.message.text
           })
-        ),
-        Response.genText(i18n.__("get_started.guidance")),
-        Response.genQuickReply(i18n.__("get_started.help"), [
-          {
-            title: i18n.__("menu.suggestion"),
-            payload: "CURATION"
-          },
-          {
-            title: i18n.__("menu.help"),
-            payload: "CARE_HELP"
-          }
-        ])
+        )
       ];
     }
 
@@ -284,5 +292,9 @@ module.exports = class Receive {
 
   firstEntity(nlp, name) {
     return nlp && nlp.entities && nlp.entities[name] && nlp.entities[name][0];
+  }
+
+  firstTrait(nlp, name) {
+    return nlp && nlp.traits && nlp.traits[name] && nlp.traits[name][0];
   }
 };
